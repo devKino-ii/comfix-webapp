@@ -1,0 +1,7 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "python",
+  "deploy": {
+    "startCommand": "COMFIX_HOST=0.0.0.0 COMFIX_PORT=$PORT python comfix_web_demo.py"
+  }
+}
