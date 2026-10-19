@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f4f1">
+  <title>ComFix | Community office</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="map-provider.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main id="authView" class="auth-layout">
+    <section class="auth-intro">
+      <div class="brand-lockup"><img class="brand-mark" src="brand-mark.svg" alt=""><span><b>ComFix</b><small>Community office</small></span></div>
+      <p class="eyebrow">A clearer view of local issues</p>
+      <h1>Better streets<br>start with a report.</h1>
+      <p class="intro-copy">Residents flag what needs attention. The community office sees one ranked list, with every report and update in view.</p>
+      <div class="intro-rule"><span></span><span></span><span></span></div>
+      <p class="auth-signature">COMMUNITY REPORTING <span>Keeping local issues in view.</span></p>
+    </section>
+    <section class="auth-panel" aria-labelledby="authTitle">
+      <div class="auth-heading"><p class="eyebrow">Community office</p><h2 id="authTitle">Welcome back</h2><p id="authDescription">Sign in to view your ComFix workspace.</p></div>
+      <form id="authForm" class="stack-form">
+        <label>Username<input id="username" name="username" autocomplete="username" minlength="3" maxlength="32" required></label>
+        <label>Password<span class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required><button id="togglePassword" class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button></span></label>
+        <p id="authError" class="form-error" role="alert"></p>
+        <button id="authSubmit" class="button button-dark" type="submit">Sign in <span aria-hidden="true">→</span></button>
+      </form>
+      <div class="auth-foot"><span id="authPrompt">New to ComFix?</span><button id="authSwitch" class="text-button" type="button">Create a citizen account</button></div>
+    </section>
+  </main>
+
+  <div id="appView" class="app-shell" hidden>
+    <aside class="sidebar">
+      <a class="brand-lockup" href="#" aria-label="ComFix home"><img class="brand-mark" src="brand-mark.svg" alt=""><span><b>ComFix</b><small>Community office</small></span></a>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <button class="nav-button active" data-view="open" type="button"><span class="nav-symbol">▤</span>Open reports<span id="openNavCount" class="nav-count"></span></button>
+        <button class="mobile-plus" data-action="report" type="button" aria-label="New report" title="New report"><span aria-hidden="true">+</span></button>
+        <button class="nav-button" data-view="resolved" type="button"><span class="nav-symbol">✓</span>Resolved</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="office-card"><span class="status-dot"></span><span><b>Community office</b><small>Morong, Rizal</small></span></div><button id="signOut" class="signout-button" type="button">Sign out <span>↗</span></button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar"><div><p class="eyebrow" id="roleLabel">COMMUNITY OFFICE</p><h1 id="pageTitle">Reports</h1></div><div class="top-actions"><time id="clockLabel" class="clock-label" aria-label="Current local time"></time><div class="account-menu"><button id="accountButton" class="user-chip" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="accountPanel" aria-label="Account details"><span id="avatarInitials" class="avatar">LG</span><span id="userLabel">Local government office</span><span class="user-role">ADMIN</span></button>
+        <div id="accountPanel" class="account-panel" role="dialog" aria-label="Account details" hidden>
+          <div class="account-head"><span id="accountAvatar" class="avatar avatar-large">LG</span><div><b id="accountUsername">office</b><span id="accountRoleBadge" class="user-role">ADMIN</span></div></div>
+          <div id="profileView">
+            <dl class="account-details"><div><dt>Full name</dt><dd id="accountFullName">—</dd></div><div><dt>Account type</dt><dd id="accountType">—</dd></div><div><dt>Contact number</dt><dd id="accountContact">—</dd></div><div><dt>Address</dt><dd id="accountAddress">—</dd></div><div><dt>Area</dt><dd>Morong, Rizal</dd></div><div><dt>Access</dt><dd id="accountAccess">—</dd></div></dl>
+            <div class="account-actions"><button id="editProfile" class="button button-outline" type="button">Edit profile</button><button id="changePassword" class="button button-outline" type="button">Change password</button></div>
+          </div>
+          <form id="profileForm" class="account-form" hidden novalidate>
+            <label>Username<input id="profileUsername" type="text" minlength="3" maxlength="32" autocomplete="username" required></label>
+            <label>Full name<input id="profileFullName" type="text" maxlength="60" autocomplete="name" placeholder="Juan Dela Cruz"></label>
+            <label>Contact number<input id="profileContact" type="tel" maxlength="40" autocomplete="tel" placeholder="09XX XXX XXXX"></label>
+            <label>Address<input id="profileAddress" type="text" maxlength="120" autocomplete="street-address" placeholder="Barangay, Morong, Rizal"></label>
+            <p id="profileError" class="form-error" role="alert"></p>
+            <div class="account-actions"><button class="button button-dark" type="submit">Save changes</button><button id="cancelProfile" class="button button-outline" type="button">Cancel</button></div>
+          </form>
+          <form id="passwordForm" class="account-form" hidden novalidate>
+            <label>Current password<input id="currentPassword" type="password" autocomplete="current-password" required></label>
+            <label>New password<input id="newPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+            <p id="passwordError" class="form-error" role="alert"></p>
+            <div class="account-actions"><button class="button button-dark" type="submit">Update password</button><button id="cancelPassword" class="button button-outline" type="button">Cancel</button></div>
+          </form>
+          <button id="accountSignOut" class="button button-dark account-signout" type="button">Sign out <span aria-hidden="true">↗</span></button>
+        </div></div></header>
+
+      <section id="openView" class="view-panel">
+        <div class="metric-row" aria-label="Community report summary">
+          <article class="metric"><span class="metric-icon orange">↗</span><div><strong id="metricOpen">0</strong><span>Open reports</span></div></article>
+          <article class="metric"><span class="metric-icon slate">▤</span><div><strong id="metricReports">0</strong><span>Reports received</span></div></article>
+          <article class="metric"><span class="metric-icon green">✓</span><div><strong id="metricResolved">0</strong><span>Reports resolved</span></div></article>
+          <article class="metric metric-alert"><span class="metric-icon red">!</span><div><strong id="metricUrgent">0</strong><span>High severity</span></div></article>
+        </div>
+
+        <div class="content-grid">
+          <aside class="details-column">
+            <section class="flow-panel"><div class="panel-heading"><h2>Status flow</h2></div><div class="status-flow"><span class="status-pill status-new">New</span><b>→</b><span class="status-pill status-verified">Verified</span><b>→</b><span class="status-pill status-progress">In progress</span><b>→</b><span class="status-pill status-resolved">Resolved</span></div></section>
+            <section class="map-panel">
+              <div class="panel-heading"><div><p class="eyebrow">MORONG, RIZAL</p><h2>Reports by location</h2></div><span id="pinCount" class="panel-count">0 pins</span></div>
+              <div class="map-stage">
+                <div id="mainMap" class="map-frame" aria-label="Map of report locations"></div>
+                <aside id="pinPanel" class="pin-panel" aria-hidden="true" aria-label="Report details"></aside>
+                <div id="pinBackdrop" class="pin-backdrop" hidden></div>
+              </div>
+              <div class="map-footer"><span><i class="legend-dot new"></i>New</span><span><i class="legend-dot verified"></i>Verified</span><span><i class="legend-dot progress"></i>In progress</span><span><i class="legend-dot resolved"></i>Resolved</span></div>
+              <p class="map-note" id="mapNote">Pins show report locations. Select a pin to focus its report.</p>
+            </section>
+          </aside>
+
+          <div class="report-column">
+            <section class="reports-section">
+              <div class="section-heading"><div><p class="eyebrow" id="listEyebrow">LIVE PRIORITY QUEUE</p><h2 id="listTitle">Reports</h2></div><div class="list-tools"><label class="sort-control"><span>Sort</span><select id="sortReports" aria-label="Sort reports"><option value="priority">Priority</option><option value="severity">Severity</option><option value="reports">Report count</option></select></label><button id="newReport" class="button button-orange" type="button"><span aria-hidden="true">＋</span> New report</button></div></div>
+              <p id="listCaption" class="section-caption">Highest priority first. New reports can reopen a resolved report.</p>
+              <div id="reportList" class="report-list" aria-live="polite"></div>
+              <nav id="reportPagination" class="report-pagination" aria-label="Report pages" hidden><button id="previousPage" class="page-button" type="button" aria-label="Previous page">←</button><span id="pageLabel" aria-live="polite"></span><button id="nextPage" class="page-button" type="button" aria-label="Next page">→</button></nav>
+              <div id="emptyReports" class="empty-state" hidden><span class="empty-mark">✓</span><h3>All clear for now</h3><p>There are no open reports in this view.</p></div>
+            </section>
+            <section id="reportFactors" class="report-factors" aria-label="Selected report priority factors">
+              <div class="factor-item"><b id="factorSeverity">—</b><span>Severity</span></div>
+              <div class="factor-item"><b id="factorReports">—</b><span>Reports</span></div>
+              <div class="factor-item factor-age"><b id="factorAge">—</b><span id="factorAgeLabel">Time open</span></div>
+              <div class="factor-item"><b id="factorDanger">—</b><span>Risk words</span></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="resolvedView" class="view-panel" hidden>
+        <div class="resolved-heading"><div><p class="eyebrow">COMPLETED REPORTS</p><h2>Resolved reports</h2><p>Issues marked fixed by the community office.</p></div><div class="resolved-tools"><span id="resolvedCount" class="resolved-total">0 closed</span><div id="reportDownload" class="report-download" hidden><button id="downloadWeekly" class="button button-outline download-button" type="button"><span>↓ Weekly report</span><small id="weeklyRange" class="download-range"></small></button><button id="downloadMonthly" class="button button-outline download-button" type="button"><span>↓ Monthly report</span><small id="monthlyRange" class="download-range"></small></button></div></div></div>
+        <div id="resolvedList" class="resolved-list"></div>
+        <div id="emptyResolved" class="empty-state" hidden><span class="empty-mark">✓</span><h3>No resolved reports yet</h3><p>Completed work will appear here.</p></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="reportDialog" class="report-dialog">
+    <form id="reportForm" method="dialog" class="report-form">
+      <header class="dialog-header"><div><p class="eyebrow">CITIZEN REPORT</p><h2>What needs attention?</h2></div><button id="closeDialog" class="icon-button" type="button" aria-label="Close">×</button></header>
+      <div class="form-grid"><label>Category<select id="reportCategory" required></select></label><label>Severity <output id="severityValue" for="reportSeverity">3 / 5</output><input id="reportSeverity" type="range" min="1" max="5" value="3"></label></div>
+      <div class="severity-scale"><span>Routine</span><span>Needs attention</span><span>Urgent</span></div>
+      <label class="description-label">Description<textarea id="reportText" rows="3" minlength="8" maxlength="500" placeholder="Describe what is happening and where." required></textarea></label>
+      <div class="location-heading"><div><label for="reportMap">Location <span class="optional-tag">OPTIONAL</span></label><small id="selectedLocation">Choose a point on the map or leave it blank.</small></div><button id="clearPin" class="text-button" type="button" hidden>Clear pin</button></div>
+      <div id="reportMap" class="report-map" aria-label="Choose an optional report location"></div>
+      <p id="reportError" class="form-error" role="alert"></p>
+      <footer class="dialog-footer"><button id="cancelReport" class="button button-light" type="button">Cancel</button><button id="submitReport" class="button button-dark" type="submit">Submit report <span aria-hidden="true">→</span></button></footer>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,268 @@
+{
+ "now": 198,
+ "next_id": 22,
+ "reports": [
+  {
+   "id": 1,
+   "cat": "Flooding",
+   "sev": 4,
+   "text": "Street flooded near the market, water knee deep",
+   "t": -5,
+   "status": "Resolved",
+   "pin": [
+    14.514134,
+    121.235086
+   ],
+   "mine": false,
+   "resolvedAt": 1792418372.2628222
+  },
+  {
+   "id": 2,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "Market road flooding again, cars stuck",
+   "t": -3,
+   "status": "Resolved",
+   "pin": [
+    14.514834,
+    121.235186
+   ],
+   "mine": false,
+   "resolvedAt": 1792418372.2628238
+  },
+  {
+   "id": 3,
+   "cat": "Road damage",
+   "sev": 3,
+   "text": "Large pothole on the main road near the school, motorbikes swerving",
+   "t": -30,
+   "status": "Resolved",
+   "pin": [
+    14.517134,
+    121.242086
+   ],
+   "mine": false,
+   "resolvedAt": 1792420721.5
+  },
+  {
+   "id": 4,
+   "cat": "Road damage",
+   "sev": 2,
+   "text": "Deep pothole beside the school gate",
+   "t": -20,
+   "status": "Resolved",
+   "pin": [
+    14.517234,
+    121.242286
+   ],
+   "mine": false,
+   "resolvedAt": 1792420721.5
+  },
+  {
+   "id": 5,
+   "cat": "Streetlight",
+   "sev": 3,
+   "text": "Streetlight out on the bridge, very dark at night",
+   "t": -48,
+   "status": "New",
+   "pin": [
+    14.511134,
+    121.244086
+   ],
+   "mine": false
+  },
+  {
+   "id": 6,
+   "cat": "Garbage",
+   "sev": 2,
+   "text": "Uncollected garbage piling up at the corner",
+   "t": -72,
+   "status": "Verified",
+   "pin": null,
+   "mine": false
+  },
+  {
+   "id": 7,
+   "cat": "Safety hazard",
+   "sev": 5,
+   "text": "Exposed live wire hanging low near the playground",
+   "t": -1,
+   "status": "Resolved",
+   "pin": [
+    14.520134,
+    121.233086
+   ],
+   "mine": false,
+   "resolvedAt": 1792418372.262825
+  },
+  {
+   "id": 8,
+   "cat": "Garbage",
+   "sev": 2,
+   "text": "Garbage not collected for a week, bad smell",
+   "t": -96,
+   "status": "Verified",
+   "pin": null,
+   "mine": false
+  },
+  {
+   "id": 9,
+   "cat": "Streetlight",
+   "sev": 2,
+   "text": "Bridge lamp broken, dark walkway",
+   "t": -24,
+   "status": "New",
+   "pin": [
+    14.511234,
+    121.244186
+   ],
+   "mine": false
+  },
+  {
+   "id": 10,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "Drainage clogged, flooded street by the market",
+   "t": -2,
+   "status": "Resolved",
+   "pin": [
+    14.514534,
+    121.235686
+   ],
+   "mine": false,
+   "resolvedAt": 1792418372.2628255
+  },
+  {
+   "id": 11,
+   "cat": "Road damage",
+   "sev": 2,
+   "text": "Fallen branch blocking the lane",
+   "t": -200,
+   "status": "Resolved",
+   "pin": [
+    14.521134,
+    121.246086
+   ],
+   "mine": false,
+   "resolvedAt": 1792418372.2628257
+  },
+  {
+   "id": 12,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "Overflowing drain on the school road",
+   "t": -150,
+   "status": "Resolved",
+   "pin": [
+    14.522134,
+    121.244086
+   ],
+   "mine": false,
+   "resolvedAt": 1792418372.262826
+  },
+  {
+   "id": 13,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "Bugbugan",
+   "t": 198,
+   "status": "New",
+   "pin": [
+    14.514877720098836,
+    121.23885154724123
+   ],
+   "mine": true
+  },
+  {
+   "id": 14,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "sggggfdgfhfdh",
+   "t": 198,
+   "status": "New",
+   "pin": null,
+   "mine": true
+  },
+  {
+   "id": 15,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "dfghdfhhfhd",
+   "t": 198,
+   "status": "New",
+   "pin": null,
+   "mine": true
+  },
+  {
+   "id": 16,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "dfhdfhfhdfh",
+   "t": 198,
+   "status": "New",
+   "pin": null,
+   "mine": true
+  },
+  {
+   "id": 17,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "dfhdfhdfdff",
+   "t": 198,
+   "status": "New",
+   "pin": null,
+   "mine": true
+  },
+  {
+   "id": 18,
+   "cat": "Flooding",
+   "sev": 3,
+   "text": "dhbdfhdfgjgh",
+   "t": 198,
+   "status": "New",
+   "pin": null,
+   "mine": true
+  },
+  {
+   "id": 19,
+   "cat": "Garbage",
+   "sev": 1,
+   "text": "bvfdbfdbnfgb",
+   "t": 198,
+   "status": "New",
+   "pin": [
+    14.514919265692658,
+    121.24123334884645
+   ],
+   "mine": true
+  },
+  {
+   "id": 20,
+   "cat": "Flooding",
+   "sev": 1,
+   "text": "Broken fence near the barangay hall",
+   "t": 198,
+   "status": "New",
+   "pin": [
+    14.5101,
+    121.2399
+   ],
+   "mine": true,
+   "by": "tester1"
+  },
+  {
+   "id": 21,
+   "cat": "Flooding",
+   "sev": 5,
+   "text": "nabasa ng loha",
+   "t": 198,
+   "status": "New",
+   "pin": [
+    14.515200347395961,
+    121.2416410446167
+   ],
+   "mine": true,
+   "by": "citi"
+  }
+ ]
+}
