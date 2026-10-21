@@ -12,7 +12,7 @@ import json, math, os, re, sys, time
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "comfix_data.json")
 STATUSES = ["New", "Verified", "In progress", "Resolved"]
-CATEGORIES = ["Flooding", "Road damage", "Streetlight", "Garbage", "Safety hazard"]
+CATEGORIES = ["Flooding", "Road damage", "Streetlight", "Garbage", "Safety hazard", "Others"]
 DANGER = ["wire", "electric", "fire", "child", "playground", "collapse", "flood", "gas"]
 STOP = set("a an the of on at by in to for and is are was were it its this that with near again "
            "very not up out from my our there here have has be been just so but or as i we you beside".split())
@@ -88,6 +88,13 @@ def pair_score(a, b, va, vb):
     return s, THRESH - 0.05  # no pin on one side: no distance bonus, slightly lower bar
 
 
+def category_label(r):
+    """Reports in "Others" display the reporter's own wording instead of the bucket name."""
+    if r["cat"] == "Others" and r.get("customCategory"):
+        return r["customCategory"]
+    return r["cat"]
+
+
 def make_group(rs, now):
     rs = sorted(rs, key=lambda r: r["t"])
     n, sev, age = len(rs), max(r["sev"] for r in rs), now - rs[0]["t"]
@@ -96,7 +103,7 @@ def make_group(rs, now):
              dng=1 + 0.3 * min(2, sum(k in text for k in DANGER)))
     return dict(rs=rs, n=n, sev=sev, age=age, f=f, pr=f["sev"] * f["rep"] * f["age"] * f["dng"],
                 st=min(STATUSES.index(r["status"]) for r in rs), title=rs[0]["text"],
-                cat=rs[0]["cat"], pin=next((r["pin"] for r in rs if r["pin"]), None))
+                cat=rs[0]["cat"], catLabel=category_label(rs[0]), pin=next((r["pin"] for r in rs if r["pin"]), None))
 
 
 def groups(reports, now):
@@ -109,15 +116,39 @@ def groups(reports, now):
             i = parent[i]
         return i
 
+    def union(i, j):
+        pi, pj = find(i), find(j)
+        if pi != pj:
+            parent[pi] = pj
+
     for i in range(len(reports)):
         for j in range(i + 1, len(reports)):
             s, th = pair_score(reports[i], reports[j], vs[i], vs[j])
             if s >= th:
-                parent[find(i)] = find(j)
+                union(i, j)
+    # Office staff can manually combine reports regardless of similarity; honor that override.
+    manual = {}
+    for i, r in enumerate(reports):
+        key = r.get("mergeKey")
+        if key is not None:
+            manual.setdefault(key, []).append(i)
+    for idxs in manual.values():
+        for i in idxs[1:]:
+            union(idxs[0], i)
     buckets = {}
     for i, r in enumerate(reports):
         buckets.setdefault(find(i), []).append(r)
     return [make_group(rs, now) for rs in buckets.values()]
+
+
+def merge_groups(db, ids, with_ids):
+    """Force two report groups to combine into one, regardless of similarity score."""
+    all_ids = set(ids) | set(with_ids)
+    key = min(all_ids)
+    for r in db["reports"]:
+        if r["id"] in all_ids:
+            r["mergeKey"] = key
+    save(db)
 
 
 def similar(db, draft):
@@ -131,6 +162,8 @@ def similar(db, draft):
 def submit(db, draft):
     r = dict(id=db["next_id"], cat=draft["cat"], sev=draft["sev"], text=draft["text"],
              t=db["now"], status="New", pin=draft["pin"], mine=True, by=draft.get("by"))
+    if draft.get("customCategory"):
+        r["customCategory"] = draft["customCategory"]
     db["next_id"] += 1
     db["reports"].append(r)
     g = next(g for g in groups(db["reports"], db["now"]) if r in g["rs"])
@@ -216,7 +249,7 @@ def file_report(db):
     head("CITIZEN  New report")
     for i, c in enumerate(CATEGORIES, 1):
         print(f"  {i}. {c}")
-    cat = CATEGORIES[num("Category", 1, 5, 1) - 1]
+    cat = CATEGORIES[num("Category", 1, len(CATEGORIES), 1) - 1]
     sev = num("How serious (5 = dangerous now)", 1, 5, 3)
     pin = None
     try:

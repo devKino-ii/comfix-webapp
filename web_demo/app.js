@@ -1,8 +1,8 @@
-const state = { user: null, data: null, view: "open", authMode: "login", sort: "priority", page: 1, selectedReportIds: null, pin: null, maps: [] };
+const state = { user: null, data: null, view: "open", authMode: "login", sort: "priority", categoryFilter: "all", page: 1, selectedReportIds: null, pin: null, maps: [] };
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const statusNames = ["New", "Verified", "In progress", "Resolved"];
-const categories = ["Flooding", "Road damage", "Streetlight", "Garbage", "Safety hazard"];
+const categories = ["Flooding", "Road damage", "Streetlight", "Garbage", "Safety hazard", "Others"];
 const pageSize = 6;
 
 function escapeHtml(value) {
@@ -53,7 +53,11 @@ async function showApp(user) {
   $("#reportDownload").hidden = !admin;
   $(".mobile-plus").hidden = admin;
   state.sort = admin ? "priority" : "severity";
+  state.categoryFilter = "all";
   state.page = 1;
+  $("#recentSortOption").hidden = !admin;
+  $("#categoryFilterControl").hidden = !admin;
+  $("#filterCategory").value = "all";
   $("#sortReports").value = state.sort;
   $("#sortReports").disabled = false;
   $("#listEyebrow").textContent = admin ? "LIVE PRIORITY QUEUE" : "ISSUES IN YOUR AREA";
@@ -91,10 +95,16 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 15_000);
 
+function mostRecentHour(report) {
+  return Math.max(...report.reports.map(item => item.createdHour));
+}
+
 function sortedReports() {
-  const reports = [...state.data.openReports];
+  let reports = [...state.data.openReports];
+  if (state.categoryFilter !== "all") reports = reports.filter(report => report.categoryKey === state.categoryFilter);
   if (state.sort === "reports") return reports.sort((a, b) => b.count - a.count || b.severity - a.severity);
   if (state.sort === "severity") return reports.sort((a, b) => b.severity - a.severity || b.count - a.count);
+  if (state.sort === "recent") return reports.sort((a, b) => mostRecentHour(b) - mostRecentHour(a));
   return reports.sort((a, b) => b.priority - a.priority);
 }
 
@@ -171,8 +181,10 @@ function renderFactors(report) {
 }
 
 function resolvedMarkup(report) {
-  const reopen = state.user.role === "admin" ? `<button class="button button-outline reopen-report" data-report-ids="${report.ids.join(",")}" type="button">Reopen</button>` : "";
-  return `<article class="resolved-row"><span class="resolved-check">✓</span><div class="resolved-copy"><h3>${escapeHtml(report.title)}</h3><p>${escapeHtml(report.category)} <span>·</span> ${report.count} ${report.count === 1 ? "report" : "reports"}</p></div><span class="status-pill status-resolved">Resolved</span>${reopen}</article>`;
+  const action = state.user.role === "admin"
+    ? `<button class="button button-outline reopen-report" data-report-ids="${report.ids.join(",")}" type="button">Reopen</button>`
+    : `<button class="button button-outline re-report" data-category="${escapeHtml(report.categoryKey)}" data-custom="${escapeHtml(report.categoryKey === "Others" ? report.category : "")}" data-text="${escapeHtml(report.title)}" data-pin="${report.pin ? report.pin.join(",") : ""}" type="button">Re-report</button>`;
+  return `<article class="resolved-row"><span class="resolved-check">✓</span><div class="resolved-copy"><h3>${escapeHtml(report.title)}</h3><p>${escapeHtml(report.category)} <span>·</span> ${report.count} ${report.count === 1 ? "report" : "reports"}</p></div><span class="status-pill status-resolved">Resolved</span>${action}</article>`;
 }
 
 const placeCache = new Map();
@@ -205,22 +217,33 @@ function renderPinPanel() {
   panel.dataset.signature = signature;
   const statusClass = `status-${report.status.toLowerCase().replaceAll(" ", "-")}`;
   const age = report.ageHours < 24 ? `${Math.max(1, Math.round(report.ageHours))}h` : `${Math.floor(report.ageHours / 24)}d`;
+  const admin = state.user.role === "admin";
+  const mergeOptions = admin ? state.data.openReports.filter(item => !sameReportIds(item.ids, report.ids)) : [];
   panel.innerHTML = `<button class="icon-button pin-close" type="button" aria-label="Close details">×</button>
     <p class="eyebrow">${escapeHtml(report.category).toUpperCase()}</p>
     <h3>${escapeHtml(report.title)}</h3>
     <span class="status-pill ${statusClass}">${escapeHtml(report.status)}</span>
     <dl class="pin-facts"><div><dt>PRIORITY</dt><dd>${report.priority.toFixed(1)}</dd></div><div><dt>SEVERITY</dt><dd>${report.severity}/5</dd></div><div><dt>REPORTS</dt><dd>${report.count}</dd></div><div><dt>TIME OPEN</dt><dd>${age}</dd></div></dl>
     <h4>LOCATION</h4>
-    ${report.pin ? `<p class="pin-place">Finding the street name...</p><p class="pin-coords">${report.pin[0].toFixed(5)}, ${report.pin[1].toFixed(5)}</p><a class="button button-outline pin-directions" href="https://www.google.com/maps/dir/?api=1&destination=${report.pin[0]},${report.pin[1]}" target="_blank" rel="noopener noreferrer">Show in directions <span aria-hidden="true">↗</span></a>` : `<p class="pin-coords">No location pin was added to this report.</p>`}
+    ${report.pin ? `<div id="pinMiniMap" class="pin-mini-map"></div><p class="pin-place">Finding the street name...</p><p class="pin-coords">${report.pin[0].toFixed(5)}, ${report.pin[1].toFixed(5)}</p><a class="button button-outline pin-directions" href="https://www.google.com/maps/dir/?api=1&destination=${report.pin[0]},${report.pin[1]}" target="_blank" rel="noopener noreferrer">Show in directions <span aria-hidden="true">↗</span></a>` : `<p class="pin-coords">No location pin was added to this report.</p>`}
     <h4>WHAT WAS REPORTED</h4>
-    <ul class="pin-said">${report.reports.map(item => `<li>${escapeHtml(item.text)}</li>`).join("")}</ul>`;
+    <ul class="pin-said">${report.reports.map(item => `<li>${escapeHtml(item.text)}</li>`).join("")}</ul>
+    ${admin ? `<h4>COMBINE REPORTS</h4>${mergeOptions.length ? `<div class="merge-control"><select id="mergeTarget" aria-label="Combine with another report"><option value="">Choose a report…</option>${mergeOptions.map(item => `<option value="${item.ids.join(",")}">${escapeHtml(item.title)} (${escapeHtml(item.category)}, ${item.count} ${item.count === 1 ? "report" : "reports"})</option>`).join("")}</select><button id="mergeConfirm" class="button button-outline" type="button">Combine</button></div><p class="merge-note">Combining folds both reports into one, so the office sees a single problem.</p>` : `<p class="merge-note">No other open reports to combine with right now.</p>`}` : ""}`;
   panel.classList.add("open");
   panel.setAttribute("aria-hidden", "false");
   $("#pinBackdrop").hidden = false;
-  if (report.pin) placeName(report.pin).then(name => {
-    const place = panel.querySelector(".pin-place");
-    if (place && panel.dataset.signature === signature) place.textContent = name || "Street name not available. Use the coordinates below.";
-  });
+  if (report.pin) {
+    placeName(report.pin).then(name => {
+      const place = panel.querySelector(".pin-place");
+      if (place && panel.dataset.signature === signature) place.textContent = name || "Street name not available. Use the coordinates below.";
+    });
+    const miniMapEl = $("#pinMiniMap");
+    if (miniMapEl) {
+      const miniMap = new ComfixMap(miniMapEl);
+      miniMap.setReports([{ ...report, displayNumber: "" }], () => {});
+      requestAnimationFrame(() => miniMap.resize());
+    }
+  }
 }
 
 function closePinPanel(flyBack = true) {
@@ -230,7 +253,21 @@ function closePinPanel(flyBack = true) {
   if (flyBack) state.maps.forEach(map => map.overview());
 }
 
-$("#pinPanel").addEventListener("click", event => { if (event.target.closest(".pin-close")) closePinPanel(); });
+$("#pinPanel").addEventListener("click", async event => {
+  if (event.target.closest(".pin-close")) { closePinPanel(); return; }
+  if (event.target.closest("#mergeConfirm")) {
+    const select = $("#mergeTarget");
+    const targetIds = select.value ? select.value.split(",").map(Number) : null;
+    if (!targetIds) { showToast("Choose a report to combine with."); return; }
+    try {
+      await api("merge", { method: "POST", body: JSON.stringify({ ids: state.pinPanelIds, withIds: targetIds }) });
+      state.pinPanelIds = [...new Set([...state.pinPanelIds, ...targetIds])];
+      state.selectedReportIds = state.pinPanelIds;
+      await loadDashboard();
+      showToast("Reports combined.");
+    } catch (error) { showToast(error.message); }
+  }
+});
 $("#pinBackdrop").addEventListener("click", () => closePinPanel());
 document.addEventListener("keydown", event => { if (event.key === "Escape" && state.pinPanelIds && !$("#reportDialog").open) closePinPanel(); });
 
@@ -264,14 +301,24 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
-function openReportDialog() {
+function updateCustomCategoryField() {
+  const isOthers = $("#reportCategory").value === "Others";
+  $("#customCategoryLabel").hidden = !isOthers;
+  $("#customCategoryInput").required = isOthers;
+  if (!isOthers) $("#customCategoryInput").value = "";
+}
+
+function openReportDialog(prefill = null) {
   $("#reportError").textContent = "";
-  $("#reportText").value = "";
+  $("#reportText").value = prefill?.text || "";
   $("#reportSeverity").value = 3;
   $("#severityValue").value = "3 / 5";
-  state.pin = null;
-  $("#clearPin").hidden = true;
-  $("#selectedLocation").textContent = "Choose a point on the map or leave it blank.";
+  state.pin = prefill?.pin || null;
+  $("#clearPin").hidden = !state.pin;
+  $("#selectedLocation").textContent = state.pin ? `${state.pin[0].toFixed(5)}, ${state.pin[1].toFixed(5)}` : "Choose a point on the map or leave it blank.";
+  $("#reportCategory").value = prefill?.category || categories[0];
+  updateCustomCategoryField();
+  if (prefill?.category === "Others") $("#customCategoryInput").value = prefill.customCategory || "";
   $("#reportDialog").showModal();
   if (!state.maps[1]) {
     state.maps[1] = new ComfixMap($("#reportMap"), pin => {
@@ -280,9 +327,14 @@ function openReportDialog() {
       $("#selectedLocation").textContent = `${pin[0].toFixed(5)}, ${pin[1].toFixed(5)}`;
       $("#clearPin").hidden = false;
     });
+  } else if (state.pin) {
+    state.maps[1].setPin(state.pin);
+  } else {
+    state.maps[1].clearPin();
   }
   requestAnimationFrame(() => state.maps[1].resize());
 }
+$("#reportCategory").addEventListener("change", updateCustomCategoryField);
 
 $("#authForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -438,6 +490,7 @@ $(".side-nav").addEventListener("click", event => {
   if (event.target.closest("[data-action='report']")) openReportDialog();
 });
 $("#sortReports").addEventListener("change", event => { state.sort = event.target.value; state.page = 1; state.selectedReportIds = null; renderDashboard(); });
+$("#filterCategory").addEventListener("change", event => { state.categoryFilter = event.target.value; state.page = 1; state.selectedReportIds = null; renderDashboard(); });
 $("#previousPage").addEventListener("click", () => { state.page -= 1; renderDashboard(); });
 $("#nextPage").addEventListener("click", () => { state.page += 1; renderDashboard(); });
 $("#reportList").addEventListener("change", async event => {
@@ -450,14 +503,21 @@ $("#reportList").addEventListener("change", async event => {
   } catch (error) { showToast(error.message); }
 });
 $("#resolvedList").addEventListener("click", async event => {
-  const button = event.target.closest(".reopen-report");
-  if (!button) return;
-  try {
-    await api("status", { method: "POST", body: JSON.stringify({ ids: button.dataset.reportIds.split(",").map(Number), status: "New" }) });
-    await loadDashboard();
-    showView("open");
-    showToast("Report reopened.");
-  } catch (error) { showToast(error.message); }
+  const reopenButton = event.target.closest(".reopen-report");
+  if (reopenButton) {
+    try {
+      await api("status", { method: "POST", body: JSON.stringify({ ids: reopenButton.dataset.reportIds.split(",").map(Number), status: "New" }) });
+      await loadDashboard();
+      showView("open");
+      showToast("Report reopened.");
+    } catch (error) { showToast(error.message); }
+    return;
+  }
+  const reReportButton = event.target.closest(".re-report");
+  if (reReportButton) {
+    const pin = reReportButton.dataset.pin ? reReportButton.dataset.pin.split(",").map(Number) : null;
+    openReportDialog({ category: reReportButton.dataset.category, customCategory: reReportButton.dataset.custom, text: reReportButton.dataset.text, pin });
+  }
 });
 $("#reportList").addEventListener("click", event => {
   const row = event.target.closest(".report-row");
@@ -476,7 +536,7 @@ $("#clearPin").addEventListener("click", () => {
 $("#reportForm").addEventListener("submit", async event => {
   event.preventDefault();
   $("#reportError").textContent = "";
-  const payload = { category: $("#reportCategory").value, severity: Number($("#reportSeverity").value), text: $("#reportText").value.trim(), pin: state.pin };
+  const payload = { category: $("#reportCategory").value, customCategory: $("#customCategoryInput").value.trim(), severity: Number($("#reportSeverity").value), text: $("#reportText").value.trim(), pin: state.pin };
   try {
     const result = await api("reports", { method: "POST", body: JSON.stringify(payload) });
     $("#reportDialog").close();
@@ -488,6 +548,7 @@ $("#reportForm").addEventListener("submit", async event => {
 });
 
 $("#reportCategory").innerHTML = categories.map(category => `<option>${escapeHtml(category)}</option>`).join("");
+$("#filterCategory").insertAdjacentHTML("beforeend", categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join(""));
 
 (async () => {
   await loadGoogleMaps();

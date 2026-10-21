@@ -72,7 +72,7 @@ def resolved_report_csv(period):
     writer.writerow(["Report IDs", "Title", "Category", "Severity", "Reports merged", "Resolved on"])
     for resolved, group in rows:
         writer.writerow([", ".join(f"CF-{report['id']:03d}" for report in group["rs"]), group["title"],
-                         group["cat"], group["sev"], group["n"], f"{resolved:%Y-%m-%d %H:%M}"])
+                         group["catLabel"], group["sev"], group["n"], f"{resolved:%Y-%m-%d %H:%M}"])
     writer.writerow([])
     writer.writerow(["Total resolved", len(rows)])
     return out.getvalue(), start, now
@@ -151,7 +151,8 @@ def group_data(group, rank=None, username=None):
         "mine": bool(username) and any(report.get("by") == username for report in group["rs"]),
         "ids": [report["id"] for report in group["rs"]],
         "title": group["title"],
-        "category": group["cat"],
+        "category": group["catLabel"],
+        "categoryKey": group["cat"],
         "severity": group["sev"],
         "count": group["n"],
         "status": engine.STATUSES[group["st"]],
@@ -280,6 +281,8 @@ class DemoHandler(BaseHTTPRequestHandler):
                 self.create_report(payload)
             elif path == "/api/status":
                 self.update_status(payload)
+            elif path == "/api/merge":
+                self.merge_reports(payload)
             elif path == "/api/profile":
                 self.update_profile(payload)
             elif path == "/api/password":
@@ -370,16 +373,37 @@ class DemoHandler(BaseHTTPRequestHandler):
         category = payload.get("category")
         severity = payload.get("severity")
         text = clean_text(payload.get("text"))
+        custom_category = clean_text(payload.get("customCategory"), 40)
         pin = valid_pin(payload.get("pin"))
         if category not in engine.CATEGORIES:
             raise ValueError("Choose a report category.")
+        if category == "Others" and not custom_category:
+            raise ValueError("Describe the category for \"Others\".")
         if not isinstance(severity, int) or not 1 <= severity <= 5:
             raise ValueError("Choose a severity from 1 to 5.")
         if len(text) < 8:
             raise ValueError("Describe the issue in at least 8 characters.")
         with LOCK:
-            report, group, reopened = engine.submit(DB, {"cat": category, "sev": severity, "text": text, "pin": pin, "by": user["username"]})
+            report, group, reopened = engine.submit(DB, {"cat": category, "sev": severity, "text": text, "pin": pin,
+                                                           "by": user["username"], "customCategory": custom_category})
         self.send_json({"ticket": f"CF-{report['id']:03d}", "groupCount": group["n"], "reopened": reopened})
+
+    def merge_reports(self, payload):
+        if not self.require_user("admin"):
+            return
+        ids = payload.get("ids")
+        with_ids = payload.get("withIds")
+        if not isinstance(ids, list) or not ids or not isinstance(with_ids, list) or not with_ids:
+            raise ValueError("Choose a report to combine with.")
+        with LOCK:
+            all_groups = engine.groups(DB["reports"], DB["now"])
+            target, other = set(ids), set(with_ids)
+            group_a = next((g for g in all_groups if {r["id"] for r in g["rs"]} == target), None)
+            group_b = next((g for g in all_groups if {r["id"] for r in g["rs"]} == other), None)
+            if not group_a or not group_b or group_a is group_b:
+                raise ValueError("Those reports are no longer available to combine. Refresh and try again.")
+            engine.merge_groups(DB, ids, with_ids)
+        self.send_json({"ok": True})
 
     def update_status(self, payload):
         if not self.require_user("admin"):

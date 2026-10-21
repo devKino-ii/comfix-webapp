@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+comfix_accounts.sqlite3
+.venv/
+.venv-1/
+.claude/
