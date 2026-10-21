@@ -243,6 +243,15 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .auth-signature { left: 24px; bottom: 12px; }
 }
 
+/* Mobile: a brief full-screen intro before the sign-in form, instead of both stacked and
+   scrollable at once. Skipped on sign-out (showAuth() without the splash flag) - only the
+   initial, not-yet-signed-in load gets it. */
+@media (max-width: 760px) {
+  #authView.show-intro .auth-panel { display: none; }
+  #authView.show-intro .auth-intro { min-height: 100vh; min-height: 100dvh; }
+  .auth-panel { animation: rise-in .3s ease both; }
+}
+
 /* Desktop: map is the full-bleed background; the overview (metrics, status flow, report list)
    floats as one compact card on the right, and nothing needs the page itself to scroll. */
 @media (min-width: 761px) {

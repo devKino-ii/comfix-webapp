@@ -35,10 +35,15 @@ async function loadGoogleMaps() {
   }
 }
 
-function showAuth() {
+function showAuth(splash = false) {
   $("#appView").hidden = true;
   $("#authView").hidden = false;
   $("#authError").textContent = "";
+  $("#authView").classList.remove("show-intro");
+  if (splash && window.innerWidth <= 760) {
+    $("#authView").classList.add("show-intro");
+    setTimeout(() => $("#authView").classList.remove("show-intro"), 900);
+  }
 }
 
 async function showApp(user) {
@@ -582,8 +587,8 @@ window.addEventListener("resize", () => {
   try {
     const { user } = await api("session");
     if (user) await showApp(user);
-    else showAuth();
+    else showAuth(true);
   } catch {
-    showAuth();
+    showAuth(true);
   }
 })();
