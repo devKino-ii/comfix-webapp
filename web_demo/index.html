@@ -13,11 +13,6 @@
   <script defer src="app.js"></script>
 </head>
 <body>
-  <a id="emergencyBar" class="emergency-bar" href="tel:+639171234567" aria-label="Emergency hotline: call 0917 123 4567">
-    <span class="emergency-icon" aria-hidden="true">!</span>
-    <span class="emergency-text-full">For Immediate Queries: <strong>call 0917 123 4567</strong></span>
-    <span class="emergency-text-short"><strong>For emergencies:</strong> 0917 123 4567</span>
-  </a>
   <main id="authView" class="auth-layout">
     <section class="auth-intro">
       <div class="brand-lockup"><img class="brand-mark" src="brand-mark.svg" alt=""><span><b>ComFix</b><small>Community office</small></span></div>
@@ -41,6 +36,10 @@
   </main>
 
   <div id="appView" class="app-shell" hidden>
+    <a id="emergencyBar" class="emergency-bar" href="tel:+639171234567" aria-label="Emergency hotline: call 0917 123 4567">
+      <span class="emergency-icon" aria-hidden="true">!</span>
+      <span>For emergencies: <strong>0917 123 4567</strong></span>
+    </a>
     <aside class="sidebar">
       <a class="brand-lockup" href="#" aria-label="ComFix home"><img class="brand-mark" src="brand-mark.svg" alt=""><span><b>ComFix</b><small>Community office</small></span></a>
       <div class="side-label">WORKSPACE</div>
@@ -53,7 +52,7 @@
     </aside>
 
     <main class="workspace">
-      <header class="topbar"><div><p class="eyebrow" id="roleLabel">COMMUNITY OFFICE</p><h1 id="pageTitle">Reports</h1></div><div class="top-actions"><time id="clockLabel" class="clock-label" aria-label="Current local time"></time><div class="account-menu"><button id="accountButton" class="user-chip" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="accountPanel" aria-label="Account details"><span id="avatarInitials" class="avatar">LG</span><span id="userLabel">Local government office</span><span class="user-role">ADMIN</span></button>
+      <header class="topbar"><div><p class="eyebrow" id="roleLabel">COMMUNITY OFFICE</p><h1 id="pageTitle">Reports</h1></div><a id="topbarHotline" class="topbar-hotline" href="tel:+639171234567" aria-label="Emergency hotline: call 0917 123 4567"><span>Need help?</span> <strong>Call 0917 123 4567</strong></a><div class="top-actions"><time id="clockLabel" class="clock-label" aria-label="Current local time"></time><div class="account-menu"><button id="accountButton" class="user-chip" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="accountPanel" aria-label="Account details"><span id="avatarInitials" class="avatar">LG</span><span id="userLabel">Local government office</span><span class="user-role">ADMIN</span></button>
         <div id="accountPanel" class="account-panel" role="dialog" aria-label="Account details" hidden>
           <div class="account-head"><span id="accountAvatar" class="avatar avatar-large">LG</span><div><b id="accountUsername">office</b><span id="accountRoleBadge" class="user-role">ADMIN</span></div></div>
           <div id="profileView">
