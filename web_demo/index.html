@@ -71,10 +71,9 @@
         </div></div></header>
 
       <section id="openView" class="view-panel">
+        <div class="mobile-pager">
         <div class="map-backdrop">
           <div id="mainMap" class="map-frame" aria-label="Map of report locations"></div>
-          <aside id="pinPanel" class="pin-panel" aria-hidden="true" aria-label="Report details"></aside>
-          <div id="pinBackdrop" class="pin-backdrop" hidden></div>
           <div class="map-chip map-chip-location"><p class="eyebrow">MORONG, RIZAL</p><span id="pinCount" class="panel-count">0 pins</span></div>
           <div class="map-chip map-chip-legend"><span><i class="legend-dot new"></i>New</span><span><i class="legend-dot verified"></i>Verified</span><span><i class="legend-dot progress"></i>In progress</span><span><i class="legend-dot resolved"></i>Resolved</span></div>
         </div>
@@ -90,7 +89,7 @@
 
           <div class="report-column">
             <section class="reports-section">
-              <div class="section-heading"><div><p class="eyebrow" id="listEyebrow">LIVE PRIORITY QUEUE</p><h2 id="listTitle">Reports</h2></div><div class="list-tools"><label id="categoryFilterControl" class="sort-control" hidden><span>Category</span><select id="filterCategory" aria-label="Filter by category"><option value="all">All categories</option></select></label><label class="sort-control"><span>Sort</span><select id="sortReports" aria-label="Sort reports"><option value="priority">Priority</option><option value="severity">Severity</option><option value="reports">Report count</option><option id="recentSortOption" value="recent" hidden>Most recent</option></select></label><button id="newReport" class="button button-orange" type="button"><span aria-hidden="true">＋</span> New report</button></div></div>
+              <div class="section-heading"><div><p class="eyebrow" id="listEyebrow">LIVE PRIORITY QUEUE</p><h2 id="listTitle">Reports</h2></div><div class="list-tools"><label id="categoryFilterControl" class="sort-control" hidden><span>Category</span><select id="filterCategory" aria-label="Filter by category"><option value="all">All</option></select></label><label class="sort-control"><span>Sort</span><select id="sortReports" aria-label="Sort reports"><option value="priority">Priority</option><option value="severity">Severity</option><option value="reports">Report count</option><option id="recentSortOption" value="recent" hidden>Most recent</option></select></label><button id="newReport" class="button button-orange" type="button"><span aria-hidden="true">＋</span> New report</button></div></div>
               <p id="listCaption" class="section-caption">Highest priority first. New reports can reopen a resolved report.</p>
               <div id="reportList" class="report-list" aria-live="polite"></div>
               <nav id="reportPagination" class="report-pagination" aria-label="Report pages" hidden><button id="previousPage" class="page-button" type="button" aria-label="Previous page">←</button><span id="pageLabel" aria-live="polite"></span><button id="nextPage" class="page-button" type="button" aria-label="Next page">→</button></nav>
@@ -104,6 +103,13 @@
             </section>
           </div>
         </div>
+        </div>
+        <button id="pagerToggle" class="pager-toggle" type="button" aria-label="Show reports">
+          <span id="pagerToggleIcon" class="pager-toggle-icon" aria-hidden="true">⌄</span>
+          <span id="pagerToggleLabel">Reports</span>
+        </button>
+        <aside id="pinPanel" class="pin-panel" aria-hidden="true" aria-label="Report details"></aside>
+        <div id="pinBackdrop" class="pin-backdrop" hidden></div>
       </section>
 
       <section id="resolvedView" class="view-panel" hidden>

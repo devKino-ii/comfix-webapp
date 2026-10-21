@@ -63,11 +63,20 @@ async function showApp(user) {
   $("#listEyebrow").textContent = admin ? "LIVE PRIORITY QUEUE" : "ISSUES IN YOUR AREA";
   $("#listTitle").textContent = admin ? "Ranked reports" : "Open reports";
   $("#pageTitle").textContent = admin ? "Reports" : "Community reports";
+  setMobilePage(false);
   await loadDashboard();
   state.maps = [new ComfixMap($("#mainMap"), report => selectReport(report.ids))];
   renderDashboard();
   requestAnimationFrame(() => state.maps.forEach(map => map.resize()));
 }
+
+function setMobilePage(showingList) {
+  $("#openView").classList.toggle("showing-list", showingList);
+  $("#pagerToggleIcon").textContent = showingList ? "⌃" : "⌄";
+  $("#pagerToggleLabel").textContent = showingList ? "Map" : "Reports";
+  $("#pagerToggle").setAttribute("aria-label", showingList ? "Show map" : "Show reports");
+}
+$("#pagerToggle").addEventListener("click", () => setMobilePage(!$("#openView").classList.contains("showing-list")));
 
 function setAuthMode(mode) {
   state.authMode = mode;
@@ -289,7 +298,7 @@ function showView(view) {
   $("#resolvedView").hidden = view !== "resolved";
   $$(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.view === view));
   $("#pageTitle").textContent = view === "open" ? (state.user.role === "admin" ? "Reports" : "Community reports") : "Resolved reports";
-  if (view === "open") state.maps.forEach(map => map.resize());
+  if (view === "open") { setMobilePage(false); state.maps.forEach(map => map.resize()); }
   if (view === "resolved") updateReportRanges();
 }
 

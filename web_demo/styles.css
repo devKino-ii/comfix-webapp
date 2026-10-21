@@ -116,7 +116,7 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
 .section-heading h2, .panel-heading h2, .resolved-heading h2 { margin: 3px 0 0; font-family: var(--serif); font-size: 20px; font-weight: 600; }
 .list-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .sort-control { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
-.sort-control select { max-width: 100px; min-height: 34px; padding: 0 22px 0 8px; border: 1px solid var(--line); border-radius: 5px; background: white; font-size: 11px; }
+.sort-control select { max-width: 116px; min-height: 34px; padding: 0 22px 0 8px; border: 1px solid var(--line); border-radius: 5px; background: white; font-size: 11px; text-overflow: ellipsis; }
 .section-caption { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
 .report-list { display: grid; gap: 7px; }
 .report-row { min-width: 0; display: grid; grid-template-columns: 27px minmax(0, 1fr); gap: 10px; padding: 13px 13px 12px; border: 1px solid var(--line); border-radius: 7px; background: white; cursor: pointer; transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease; animation: rise-in .35s both; }
@@ -175,6 +175,8 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
 
 /* Compact overview: metrics + status flow + report list, floating on the map */
 .overview-overlay { display: flex; flex-direction: column; min-width: 0; gap: 10px; }
+.mobile-pager { display: contents; }
+.pager-toggle { display: none; }
 .flow-panel { min-width: 0; padding: 10px 14px; border: 1px solid var(--line); background: white; }
 .flow-panel .panel-heading { margin-bottom: 6px; }
 .flow-panel .panel-heading h2 { font-size: 13px; }
@@ -248,9 +250,9 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   @supports (height: 100dvh) { .workspace { min-height: 100dvh; } }
   .view-panel { flex: 1; min-height: 0; }
   #resolvedView.view-panel { overflow-y: auto; }
-  #openView.view-panel { margin: 0 -30px -34px; overflow: hidden; }
+  #openView.view-panel { margin: 0 -30px -34px; overflow: clip; }
   .map-backdrop { position: absolute; inset: 0; height: auto; }
-  .overview-overlay { position: absolute; top: 16px; right: 16px; bottom: 16px; width: min(380px, 94vw); background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 40px rgba(20,30,26,.14); overflow: hidden; z-index: 20; }
+  .overview-overlay { position: absolute; top: 16px; right: 16px; bottom: 16px; width: min(380px, 94vw); background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 40px rgba(20,30,26,.14); overflow: clip; z-index: 20; }
   .overview-overlay .metric-row { flex: none; gap: 1px; background: var(--line); }
   .overview-overlay .metric { background: white; border: 0; min-height: 0; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 8px; }
   .overview-overlay .metric-icon { width: 20px; height: 20px; font-size: 11px; border-radius: 4px; }
@@ -262,7 +264,7 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .overview-overlay #reportList { flex: 1; min-height: 0; overflow-y: auto; padding-right: 2px; }
   .overview-overlay .section-heading h2 { font-size: 16px; }
   .overview-overlay .eyebrow { font-size: 9px; }
-  .overview-overlay .sort-control select { max-width: 84px; min-height: 30px; font-size: 10px; }
+  .overview-overlay .sort-control select { max-width: 96px; min-height: 30px; font-size: 10px; }
   .overview-overlay #newReport { min-height: 30px; padding: 0 10px; font-size: 11px; }
 }
 
@@ -270,16 +272,29 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .overview-overlay { width: min(300px, 94vw); }
 }
 
+/* Mobile: the map and the overview+reports are two locked, full-height pages.
+   Swiping/dragging on the map would otherwise fight with scrolling the page, so
+   scrolling the page is disabled here and a button slides between the two instead. */
 @media (max-width: 760px) {
   .report-factors { position: sticky; top: 0; z-index: 7; order: -1; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 5px; box-shadow: 0 3px 10px rgba(32,39,44,.08); }
   .factor-item { min-height: 45px; gap: 2px; padding: 4px 5px; }
   .factor-item b { font-size: 17px; }
   .factor-item span { font-size: 9px; }
-  .map-backdrop { height: calc(100vh - 95px); min-height: 380px; }
-  .map-backdrop { height: calc(100dvh - 95px); }
-  .overview-overlay { padding: 0 14px 24px; }
   .flow-panel { display: block; }
   .clock-label { display: inline-block; padding: 5px 7px; font-size: 10px; }
+
+  #openView.view-panel { height: calc(100vh - 75px - 66px - env(safe-area-inset-bottom)); overflow: clip; }
+  #openView.view-panel { height: calc(100dvh - 75px - 66px - env(safe-area-inset-bottom)); }
+  .mobile-pager { display: flex; flex-direction: column; height: 200%; width: 100%; transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
+  #openView.showing-list .mobile-pager { transform: translateY(-50%); }
+  .mobile-pager > .map-backdrop, .mobile-pager > .overview-overlay { flex: none; width: 100%; height: 50%; }
+  .overview-overlay { padding: 14px 14px 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  .pager-toggle { position: absolute; z-index: 25; left: 50%; bottom: 16px; display: flex; align-items: center; gap: 7px; padding: 10px 18px; border: 0; border-radius: 999px; background: var(--ink); color: white; font-size: 12px; font-weight: 700; box-shadow: 0 8px 22px rgba(20,30,26,.3); transform: translateX(-50%); transition: transform .15s ease; }
+  .pager-toggle:active { transform: translateX(-50%) scale(.95); }
+  .pager-toggle-icon { font-size: 15px; line-height: 1; }
+  #openView.showing-list .pager-toggle { bottom: auto; top: 16px; }
+  .map-chip-legend { bottom: 68px; }
 }
 
 /* Mobile: slightly larger text for readability */
@@ -367,10 +382,9 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .map-backdrop { isolation: auto; overflow: visible; }
   .map-frame { isolation: isolate; }
   .pin-backdrop { position: fixed; z-index: 45; inset: 0; display: block; background: rgba(23,32,30,.38); }
-  .pin-panel { position: fixed; z-index: 50; top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: auto; max-height: calc(80vh + env(safe-area-inset-bottom)); padding: 26px 16px calc(20px + env(safe-area-inset-bottom)); border: 0; border-top: 1px solid var(--line); border-radius: 14px 14px 0 0; box-shadow: 0 -10px 32px rgba(32,39,44,.2); transform: translateY(calc(100% + 80px)); overscroll-behavior: contain; }
+  .pin-panel { position: fixed; z-index: 50; inset: 0; width: 100%; height: 100%; max-height: none; padding: calc(26px + env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom)); border: 0; border-radius: 0; box-shadow: none; transform: translateY(100%); overscroll-behavior: contain; }
   .pin-panel.open { transform: none; }
-  .pin-panel::before { position: absolute; top: 9px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: #d3d9d9; content: ''; }
-  .pin-close { top: 14px; right: 14px; width: 34px; height: 34px; }
+  .pin-close { top: calc(14px + env(safe-area-inset-top)); right: 14px; width: 34px; height: 34px; }
   .pin-panel h3 { font-size: 19px; }
 }
 @media (max-width: 390px) { .status-select { width: 100px; padding-right: 18px; } }
