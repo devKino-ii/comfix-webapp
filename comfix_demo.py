@@ -10,7 +10,11 @@ Pins are (lat, lng) pairs. The real app would fill them from a Google Maps click
 """
 import json, math, os, re, sys, time
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "comfix_data.json")
+# Vercel's serverless functions can only write under /tmp (everything else is read-only), and that
+# storage does not persist between cold starts. Railway and local runs keep using a file next to this
+# script, which does persist.
+DB_FILE = (os.path.join("/tmp", "comfix_data.json") if os.environ.get("VERCEL")
+           else os.path.join(os.path.dirname(os.path.abspath(__file__)), "comfix_data.json"))
 STATUSES = ["New", "Verified", "In progress", "Resolved"]
 CATEGORIES = ["Flooding", "Road damage", "Streetlight", "Garbage", "Safety hazard", "Others"]
 DANGER = ["wire", "electric", "fire", "child", "playground", "collapse", "flood", "gas"]

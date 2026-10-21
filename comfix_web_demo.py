@@ -21,7 +21,8 @@ import comfix_demo as engine
 
 ROOT = Path(__file__).resolve().parent
 WEB_ROOT = ROOT / "web_demo"
-AUTH_DB = ROOT / "comfix_accounts.sqlite3"
+# See the matching comment in comfix_demo.py: Vercel functions can only write under /tmp.
+AUTH_DB = Path("/tmp/comfix_accounts.sqlite3") if os.environ.get("VERCEL") else ROOT / "comfix_accounts.sqlite3"
 HOST = os.environ.get("COMFIX_HOST", "127.0.0.1")
 PORT = int(os.environ.get("COMFIX_PORT", "8000"))
 PASSWORD_ROUNDS = 310_000
@@ -103,6 +104,12 @@ def setup_accounts():
             password = os.environ.get("COMFIX_ADMIN_PASSWORD", "comfix-admin")
             salt, digest = password_record(password)
             connection.execute("INSERT INTO accounts (username, salt, password_hash, role) VALUES (?, ?, ?, 'admin')", (username, salt, digest))
+
+
+# Runs on every import, not just `python comfix_web_demo.py`, so the accounts table and the
+# default office/comfix-admin login exist before the first request even when this module is
+# loaded as a Vercel function instead of run directly.
+setup_accounts()
 
 
 def get_account(username):
@@ -440,7 +447,6 @@ class DemoHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    setup_accounts()
     server = ThreadingHTTPServer((HOST, PORT), DemoHandler)
     print(f"ComFix web demo: http://{HOST}:{PORT}")
     print("Demo admin login: office / comfix-admin (change with COMFIX_ADMIN_USERNAME and COMFIX_ADMIN_PASSWORD)")
