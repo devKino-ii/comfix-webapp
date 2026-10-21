@@ -14,6 +14,11 @@
 </head>
 <body>
   <main id="authView" class="auth-layout">
+    <a id="emergencyBar" class="emergency-bar" href="tel:+639171234567" aria-label="Emergency hotline: call 0917 123 4567">
+      <span class="emergency-icon" aria-hidden="true">!</span>
+      <span class="emergency-text-full">For Immediate Queries: <strong>call 0917 123 4567</strong></span>
+      <span class="emergency-text-short"><strong>For emergencies:</strong> 0917 123 4567</span>
+    </a>
     <section class="auth-intro">
       <div class="brand-lockup"><img class="brand-mark" src="brand-mark.svg" alt=""><span><b>ComFix</b><small>Community office</small></span></div>
       <p class="eyebrow">A clearer view of local issues</p>
@@ -23,7 +28,7 @@
       <p class="auth-signature">COMMUNITY REPORTING <span>Keeping local issues in view.</span></p>
     </section>
     <section class="auth-panel" aria-labelledby="authTitle">
-      <div class="auth-heading"><p class="eyebrow">Community office</p><h2 id="authTitle">Welcome back</h2><p id="authDescription">Sign in to view your ComFix workspace.</p></div>
+      <div class="auth-heading"><p class="eyebrow">Community office</p><h2 id="authTitle">Welcome</h2><p id="authDescription">Sign in to view your ComFix workspace.</p></div>
       <form id="authForm" class="stack-form">
         <label>Username<input id="username" name="username" autocomplete="username" minlength="3" maxlength="32" required></label>
         <label>Password<span class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required><button id="togglePassword" class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button></span></label>

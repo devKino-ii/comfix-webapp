@@ -96,7 +96,7 @@ $("#pagerToggle").addEventListener("click", () => setMobilePage(!$("#openView").
 function setAuthMode(mode) {
   state.authMode = mode;
   const registering = mode === "register";
-  $("#authTitle").textContent = registering ? "Create an account" : "Welcome back";
+  $("#authTitle").textContent = registering ? "Create an account" : "Welcome";
   $("#authDescription").textContent = registering ? "Create a citizen account to send reports." : "Sign in to view your ComFix workspace.";
   $("#authSubmit").innerHTML = registering ? 'Create account <span aria-hidden="true">→</span>' : 'Sign in <span aria-hidden="true">→</span>';
   $("#authPrompt").textContent = registering ? "Already have an account?" : "New to ComFix?";
