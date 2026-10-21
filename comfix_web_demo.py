@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Local ComFix web demo. Run with: python comfix_web_demo.py"""
+import base64
 import hashlib
 import hmac
 import json
@@ -26,7 +27,14 @@ AUTH_DB = Path("/tmp/comfix_accounts.sqlite3") if os.environ.get("VERCEL") else 
 HOST = os.environ.get("COMFIX_HOST", "127.0.0.1")
 PORT = int(os.environ.get("COMFIX_PORT", "8000"))
 PASSWORD_ROUNDS = 310_000
-SESSIONS = {}
+# A per-process SESSIONS dict only works when every request lands on the same process. Railway and
+# local runs are a single long-lived server, so that held; Vercel runs each request on whichever of
+# several serverless instances is free, each with its own empty dict, so a session created by one
+# request could "vanish" on the next. Signing the session into the cookie itself (below) needs no
+# server-side state, so it works the same way on both. COMFIX_SESSION_SECRET should be set in
+# production; without it every process instance falls back to the same fixed string, which is fine
+# for this prototype (see the README) but not a real secret.
+SESSION_SECRET = os.environ.get("COMFIX_SESSION_SECRET", "comfix-demo-fixed-secret-set-COMFIX_SESSION_SECRET-to-change").encode()
 LOCK = threading.RLock()
 DB = engine.load()
 
@@ -132,24 +140,33 @@ def public_user(account):
             "contact": account["contact"], "address": account["address"]}
 
 
-def make_session(account):
-    token = secrets.token_urlsafe(32)
-    SESSIONS[token] = {"username": account["username"], "role": account["role"]}
-    return token
+def make_session(username):
+    """A signed, self-contained session token: username + a random nonce (so re-logging in as the
+    same user issues a different token) + an HMAC signature, all base64'd into the cookie value.
+    No server-side session table to keep in sync across processes or instances."""
+    payload = f"{username}:{secrets.token_urlsafe(12)}".encode()
+    signature = hmac.new(SESSION_SECRET, payload, hashlib.sha256).digest()
+    return base64.urlsafe_b64encode(payload + b"." + signature).decode()
 
 
-def session_token(handler):
-    morsel = SimpleCookie(handler.headers.get("Cookie", "")).get("comfix_session")
-    return morsel.value if morsel else None
+def session_username(token):
+    try:
+        raw = base64.urlsafe_b64decode(token.encode())
+        payload, signature = raw.rsplit(b".", 1)
+        expected = hmac.new(SESSION_SECRET, payload, hashlib.sha256).digest()
+        if not hmac.compare_digest(signature, expected):
+            return None
+        return payload.split(b":", 1)[0].decode()
+    except (ValueError, TypeError):
+        return None
 
 
 def current_user(handler):
-    cookie = SimpleCookie(handler.headers.get("Cookie", ""))
-    morsel = cookie.get("comfix_session")
-    session = SESSIONS.get(morsel.value) if morsel else None
-    if not session:
+    morsel = SimpleCookie(handler.headers.get("Cookie", "")).get("comfix_session")
+    username = session_username(morsel.value) if morsel else None
+    if not username:
         return None
-    account = get_account(session["username"])
+    account = get_account(username)
     return public_user(account) if account else None
 
 
@@ -279,10 +296,6 @@ class DemoHandler(BaseHTTPRequestHandler):
             elif path == "/api/login":
                 self.login(payload)
             elif path == "/api/logout":
-                cookie = SimpleCookie(self.headers.get("Cookie", ""))
-                morsel = cookie.get("comfix_session")
-                if morsel:
-                    SESSIONS.pop(morsel.value, None)
                 self.send_json({"ok": True}, clear_cookie=True)
             elif path == "/api/reports":
                 self.create_report(payload)
@@ -310,7 +323,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             self.send_json({"error": "That username is already taken."}, HTTPStatus.CONFLICT)
             return
         account = get_account(username)
-        self.send_json({"user": public_user(account)}, cookie=make_session(account))
+        self.send_json({"user": public_user(account)}, cookie=make_session(username))
 
     def login(self, payload):
         username = clean_text(payload.get("username"), 32)
@@ -323,7 +336,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         if not hmac.compare_digest(digest, account["password_hash"]):
             self.send_json({"error": "Username or password is incorrect."}, HTTPStatus.UNAUTHORIZED)
             return
-        self.send_json({"user": public_user(account)}, cookie=make_session(account))
+        self.send_json({"user": public_user(account)}, cookie=make_session(username))
 
     def update_profile(self, payload):
         user = self.require_user()
@@ -347,14 +360,14 @@ class DemoHandler(BaseHTTPRequestHandler):
                 self.send_json({"error": "That username is already taken."}, HTTPStatus.CONFLICT)
                 return
             if new_username != old_username:
-                for session in SESSIONS.values():
-                    if session["username"] == old_username:
-                        session["username"] = new_username
                 for report in DB["reports"]:
                     if report.get("by") == old_username:
                         report["by"] = new_username
                 engine.save(DB)
-        self.send_json({"user": public_user(get_account(new_username))})
+        # The session cookie is signed with the username, so a rename needs a fresh one - the old
+        # token now names an account that no longer exists.
+        cookie = make_session(new_username) if new_username != old_username else None
+        self.send_json({"user": public_user(get_account(new_username))}, cookie=cookie)
 
     def change_password(self, payload):
         user = self.require_user()
