@@ -254,7 +254,7 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .map-backdrop { position: absolute; inset: 0; height: auto; }
   .overview-overlay { position: absolute; top: 16px; right: 16px; bottom: 16px; width: min(380px, 94vw); background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 40px rgba(20,30,26,.14); overflow: clip; z-index: 20; }
   .overview-overlay .metric-row { flex: none; gap: 1px; background: var(--line); }
-  .overview-overlay .metric { background: white; border: 0; min-height: 0; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 8px; }
+  .overview-overlay .metric { background: white; border: 0; min-height: 0; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 10px 8px; }
   .overview-overlay .metric-icon { width: 20px; height: 20px; font-size: 11px; border-radius: 4px; }
   .overview-overlay .metric strong { font-size: 17px; }
   .overview-overlay .metric div > span { font-size: 9px; }
@@ -292,7 +292,7 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
      are dropped here rather than squeezed — there just isn't room for them on a short phone. */
   .overview-overlay { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); overflow: clip; display: flex; flex-direction: column; gap: 6px; }
   .overview-overlay .metric-row { grid-template-columns: repeat(4, minmax(0, 1fr)); flex: none; gap: 5px; }
-  .overview-overlay .metric { min-height: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 6px 7px; }
+  .overview-overlay .metric { min-height: 0; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 6px 7px; }
   .overview-overlay .metric-icon { width: 20px; height: 20px; font-size: 11px; }
   .overview-overlay .metric strong { font-size: 16px; }
   .overview-overlay .metric div > span { font-size: 8px; }
@@ -319,6 +319,9 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .pager-toggle:active { transform: translateX(-50%) scale(.95); }
   .pager-toggle-icon { font-size: 15px; line-height: 1; }
   #openView.showing-list .pager-toggle { bottom: auto; top: 16px; }
+  /* The toggle sits over the top of this page when it's the "go back to map" button - give the
+     metrics row room to clear it instead of being covered. */
+  #openView.showing-list .overview-overlay { padding-top: 62px; }
   .map-chip-legend { bottom: 68px; }
 }
 
