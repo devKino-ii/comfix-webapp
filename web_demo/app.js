@@ -3,7 +3,10 @@ const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const statusNames = ["New", "Verified", "In progress", "Resolved"];
 const categories = ["Flooding", "Road damage", "Streetlight", "Garbage", "Safety hazard", "Others"];
-const pageSize = 6;
+function pageSize() {
+  // Mobile has no scrolling, so each page must be short enough to fit the screen on its own.
+  return window.innerWidth <= 760 ? 3 : 6;
+}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -130,15 +133,16 @@ function renderDashboard() {
   $("#openNavCount").textContent = data.openReportCount;
   $("#listCaption").textContent = state.user.role === "admin" ? "Sort reports by priority, severity, or report count." : "Open issues reported by residents in the community.";
   const reports = sortedReports();
-  const pageCount = Math.max(1, Math.ceil(reports.length / pageSize));
+  const size = pageSize();
+  const pageCount = Math.max(1, Math.ceil(reports.length / size));
   state.page = Math.min(state.page, pageCount);
-  const startIndex = (state.page - 1) * pageSize;
-  const pageReports = reports.slice(startIndex, state.page * pageSize);
+  const startIndex = (state.page - 1) * size;
+  const pageReports = reports.slice(startIndex, state.page * size);
   const pinnedTotal = reports.filter(report => report.pin).length;
   $("#pinCount").textContent = `${pinnedTotal} ${pinnedTotal === 1 ? "pin" : "pins"}`;
   $("#reportList").innerHTML = pageReports.map((report, index) => reportMarkup(report, startIndex + index)).join("");
   $("#emptyReports").hidden = reports.length > 0;
-  $("#reportPagination").hidden = reports.length <= pageSize;
+  $("#reportPagination").hidden = reports.length <= size;
   $("#pageLabel").textContent = `${state.page} / ${pageCount}`;
   $("#previousPage").disabled = state.page <= 1;
   $("#nextPage").disabled = state.page >= pageCount;
@@ -221,27 +225,30 @@ function renderPinPanel() {
     $("#pinBackdrop").hidden = true;
     return;
   }
-  const signature = JSON.stringify([report.ids, report.status, report.count, report.priority]);
+  const signature = JSON.stringify([report.ids, report.status, report.count, report.priority, window.innerWidth <= 760]);
   if (panel.dataset.signature === signature && panel.classList.contains("open")) return;
   panel.dataset.signature = signature;
   const statusClass = `status-${report.status.toLowerCase().replaceAll(" ", "-")}`;
   const age = report.ageHours < 24 ? `${Math.max(1, Math.round(report.ageHours))}h` : `${Math.floor(report.ageHours / 24)}d`;
   const admin = state.user.role === "admin";
   const mergeOptions = admin ? state.data.openReports.filter(item => !sameReportIds(item.ids, report.ids)) : [];
+  // On a wide screen the real map is still visible around this panel, so repeating it here is redundant; on a
+  // phone the panel covers the whole screen, so it is the only place left to show where the report is.
+  const showLocation = window.innerWidth <= 760;
   panel.innerHTML = `<button class="icon-button pin-close" type="button" aria-label="Close details">×</button>
     <p class="eyebrow">${escapeHtml(report.category).toUpperCase()}</p>
     <h3>${escapeHtml(report.title)}</h3>
     <span class="status-pill ${statusClass}">${escapeHtml(report.status)}</span>
     <dl class="pin-facts"><div><dt>PRIORITY</dt><dd>${report.priority.toFixed(1)}</dd></div><div><dt>SEVERITY</dt><dd>${report.severity}/5</dd></div><div><dt>REPORTS</dt><dd>${report.count}</dd></div><div><dt>TIME OPEN</dt><dd>${age}</dd></div></dl>
-    <h4>LOCATION</h4>
-    ${report.pin ? `<div id="pinMiniMap" class="pin-mini-map"></div><p class="pin-place">Finding the street name...</p><p class="pin-coords">${report.pin[0].toFixed(5)}, ${report.pin[1].toFixed(5)}</p><a class="button button-outline pin-directions" href="https://www.google.com/maps/dir/?api=1&destination=${report.pin[0]},${report.pin[1]}" target="_blank" rel="noopener noreferrer">Show in directions <span aria-hidden="true">↗</span></a>` : `<p class="pin-coords">No location pin was added to this report.</p>`}
+    ${showLocation ? `<section class="pin-location"><h4>LOCATION</h4>
+    ${report.pin ? `<div id="pinMiniMap" class="pin-mini-map"></div><p class="pin-place">Finding the street name...</p><p class="pin-coords">${report.pin[0].toFixed(5)}, ${report.pin[1].toFixed(5)}</p><a class="button button-outline pin-directions" href="https://www.google.com/maps/dir/?api=1&destination=${report.pin[0]},${report.pin[1]}" target="_blank" rel="noopener noreferrer">Show in directions <span aria-hidden="true">↗</span></a>` : `<p class="pin-coords">No location pin was added to this report.</p>`}</section>` : ""}
     <h4>WHAT WAS REPORTED</h4>
     <ul class="pin-said">${report.reports.map(item => `<li>${escapeHtml(item.text)}</li>`).join("")}</ul>
     ${admin ? `<h4>COMBINE REPORTS</h4>${mergeOptions.length ? `<div class="merge-control"><select id="mergeTarget" aria-label="Combine with another report"><option value="">Choose a report…</option>${mergeOptions.map(item => `<option value="${item.ids.join(",")}">${escapeHtml(item.title)} (${escapeHtml(item.category)}, ${item.count} ${item.count === 1 ? "report" : "reports"})</option>`).join("")}</select><button id="mergeConfirm" class="button button-outline" type="button">Combine</button></div><p class="merge-note">Combining folds both reports into one, so the office sees a single problem.</p>` : `<p class="merge-note">No other open reports to combine with right now.</p>`}` : ""}`;
   panel.classList.add("open");
   panel.setAttribute("aria-hidden", "false");
   $("#pinBackdrop").hidden = false;
-  if (report.pin) {
+  if (report.pin && showLocation) {
     placeName(report.pin).then(name => {
       const place = panel.querySelector(".pin-place");
       if (place && panel.dataset.signature === signature) place.textContent = name || "Street name not available. Use the coordinates below.";
@@ -284,7 +291,7 @@ function selectReport(ids) {
   state.selectedReportIds = ids;
   state.pinPanelIds = ids;
   const index = sortedReports().findIndex(report => sameReportIds(report.ids, ids));
-  if (index >= 0) state.page = Math.floor(index / pageSize) + 1;
+  if (index >= 0) state.page = Math.floor(index / pageSize()) + 1;
   renderDashboard();
   state.maps.forEach(map => map.openReport(ids));
   document.querySelector(`[data-report-ids="${ids.join(",")}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -558,6 +565,17 @@ $("#reportForm").addEventListener("submit", async event => {
 
 $("#reportCategory").innerHTML = categories.map(category => `<option>${escapeHtml(category)}</option>`).join("");
 $("#filterCategory").insertAdjacentHTML("beforeend", categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join(""));
+
+// Keep the layout correct across resizes and orientation changes (e.g. crossing the phone/desktop breakpoint).
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (!state.user) return;
+    renderDashboard();
+    state.maps.forEach(map => map.resize());
+  }, 150);
+});
 
 (async () => {
   await loadGoogleMaps();
