@@ -243,13 +243,17 @@ input, select, textarea { transition: border-color .15s ease, box-shadow .15s ea
   .auth-signature { left: 24px; bottom: 12px; }
 }
 
-/* Mobile: a brief full-screen intro before the sign-in form, instead of both stacked and
-   scrollable at once. Skipped on sign-out (showAuth() without the splash flag) - only the
-   initial, not-yet-signed-in load gets it. */
+/* Mobile: a full-screen intro shows first, instead of both it and the sign-in form stacked and
+   scrollable at once. This is the plain default (not something JS switches on) so there is no
+   flash of the form before JS decides what to do; JS instead removes it (fading the intro out,
+   then the form in) once it knows what to show - immediately on sign-out, after a few seconds on
+   a fresh load. See showAuth() in app.js. */
 @media (max-width: 760px) {
-  #authView.show-intro .auth-panel { display: none; }
-  #authView.show-intro .auth-intro { min-height: 100vh; min-height: 100dvh; }
-  .auth-panel { animation: rise-in .3s ease both; }
+  .auth-panel { display: none; }
+  .auth-intro { min-height: 100vh; min-height: 100dvh; transition: opacity .4s ease; }
+  #authView.intro-fading .auth-intro { opacity: 0; pointer-events: none; }
+  #authView.reveal-form .auth-intro { display: none; }
+  #authView.reveal-form .auth-panel { display: block; animation: rise-in .35s ease both; }
 }
 
 /* Desktop: map is the full-bleed background; the overview (metrics, status flow, report list)

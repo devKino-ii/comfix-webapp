@@ -39,10 +39,17 @@ function showAuth(splash = false) {
   $("#appView").hidden = true;
   $("#authView").hidden = false;
   $("#authError").textContent = "";
-  $("#authView").classList.remove("show-intro");
+  const view = $("#authView");
+  view.classList.remove("reveal-form", "intro-fading");
   if (splash && window.innerWidth <= 760) {
-    $("#authView").classList.add("show-intro");
-    setTimeout(() => $("#authView").classList.remove("show-intro"), 900);
+    // Mobile's intro is the plain default (see styles.css) so it's already showing with no flash
+    // of the form - hold it a few seconds, fade it out, then fade the form in.
+    setTimeout(() => {
+      view.classList.add("intro-fading");
+      setTimeout(() => view.classList.add("reveal-form"), 400);
+    }, 4000);
+  } else {
+    view.classList.add("reveal-form");
   }
 }
 
