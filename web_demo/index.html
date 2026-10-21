@@ -13,12 +13,12 @@
   <script defer src="app.js"></script>
 </head>
 <body>
+  <a id="emergencyBar" class="emergency-bar" href="tel:+639171234567" aria-label="Emergency hotline: call 0917 123 4567">
+    <span class="emergency-icon" aria-hidden="true">!</span>
+    <span class="emergency-text-full">For Immediate Queries: <strong>call 0917 123 4567</strong></span>
+    <span class="emergency-text-short"><strong>For emergencies:</strong> 0917 123 4567</span>
+  </a>
   <main id="authView" class="auth-layout">
-    <a id="emergencyBar" class="emergency-bar" href="tel:+639171234567" aria-label="Emergency hotline: call 0917 123 4567">
-      <span class="emergency-icon" aria-hidden="true">!</span>
-      <span class="emergency-text-full">For Immediate Queries: <strong>call 0917 123 4567</strong></span>
-      <span class="emergency-text-short"><strong>For emergencies:</strong> 0917 123 4567</span>
-    </a>
     <section class="auth-intro">
       <div class="brand-lockup"><img class="brand-mark" src="brand-mark.svg" alt=""><span><b>ComFix</b><small>Community office</small></span></div>
       <p class="eyebrow">A clearer view of local issues</p>
@@ -36,6 +36,7 @@
         <button id="authSubmit" class="button button-dark" type="submit">Sign in <span aria-hidden="true">→</span></button>
       </form>
       <div class="auth-foot"><span id="authPrompt">New to ComFix?</span><button id="authSwitch" class="text-button" type="button">Create a citizen account</button></div>
+      <div class="auth-foot"><span>Need help right now?</span><a class="text-button" href="tel:+639171234567">Call 0917 123 4567</a></div>
     </section>
   </main>
 
